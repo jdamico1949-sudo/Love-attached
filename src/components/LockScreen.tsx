@@ -4,7 +4,7 @@ import { getSalt, loadState, setEncryptionKey, setSalt } from "../storage/db";
 import { migrateLegacyDataIfAny } from "../storage/migrate";
 import { LogoMark } from "./Logo";
 
-type Mode = "checking" | "create" | "enter";
+type Mode = "checking" | "create" | "enter" | "startup-error";
 
 export function LockScreen({ onUnlock }: { onUnlock: () => void }) {
   const [mode, setMode] = useState<Mode>("checking");
@@ -14,7 +14,13 @@ export function LockScreen({ onUnlock }: { onUnlock: () => void }) {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    getSalt().then((salt) => setMode(salt ? "enter" : "create"));
+    // A failure here before anything renders used to leave a
+    // permanently blank screen (mode stuck on "checking", nothing ever
+    // catching the rejection) -- reported directly as "nothing loads".
+    // Whatever goes wrong now, show something instead of nothing.
+    getSalt()
+      .then((salt) => setMode(salt ? "enter" : "create"))
+      .catch(() => setMode("startup-error"));
   }, []);
 
   async function handleCreate(e: React.FormEvent) {
@@ -60,6 +66,22 @@ export function LockScreen({ onUnlock }: { onUnlock: () => void }) {
   }
 
   if (mode === "checking") return null;
+
+  if (mode === "startup-error") {
+    return (
+      <div style={{ maxWidth: 420, margin: "0 auto", padding: "60px 20px" }}>
+        <div className="card">
+          <h2 style={{ fontSize: 20, marginBottom: 10 }}>Couldn't start up</h2>
+          <p style={{ color: "var(--stone)", fontSize: 14, marginBottom: 18 }}>
+            Something unexpected went wrong loading your data. Your treasures aren't lost — try reloading the page.
+          </p>
+          <button type="button" className="btn-primary" style={{ width: "100%" }} onClick={() => window.location.reload()}>
+            Reload
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ maxWidth: 420, margin: "0 auto", padding: "60px 20px" }}>

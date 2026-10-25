@@ -11,7 +11,12 @@
 import { decryptBlob, decryptJSON, encryptBlob, encryptJSON, type Encrypted, type EncryptedBlob } from "../utils/crypto";
 
 const DB_NAME = "love-attached";
-const DB_VERSION = 1;
+// Bumped from 1 to 2 when the "meta" store (the encryption salt) was
+// added: a device whose database was already created at version 1
+// opening again at that SAME version never runs onupgradeneeded, so the
+// new store would silently never get created there -- every read of it
+// then throws, uncaught, and the app never renders anything at all.
+const DB_VERSION = 2;
 const STATE_STORE = "state";
 const BLOB_STORE = "blobs";
 const META_STORE = "meta";
