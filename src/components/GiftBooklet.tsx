@@ -121,7 +121,7 @@ function TreasurePage({
         <img
           src={url}
           alt=""
-          style={{ width: "100%", height: "40%", objectFit: "cover", borderRadius: 10, marginBottom: 16 }}
+          style={{ width: "100%", height: "4.2in", objectFit: "cover", borderRadius: 10, marginBottom: 16 }}
         />
       )}
 
