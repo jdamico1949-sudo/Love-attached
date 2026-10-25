@@ -2,6 +2,7 @@ import { useStore } from "../store";
 import { useBlobUrl } from "../utils/useBlobUrl";
 import type { Treasure } from "../types";
 import { LogoMark } from "./Logo";
+import { FloatingActions } from "./FloatingActions";
 import { useState } from "react";
 
 // "Signed" is typed as a full closing, e.g. "Love, Grandma" -- the exact
@@ -62,6 +63,8 @@ export function GiftBookletPage({ onBack }: { onBack: () => void }) {
           ))}
         </div>
       )}
+
+      {person && <FloatingActions onBack={onBack} onPrint={() => window.print()} />}
     </div>
   );
 }

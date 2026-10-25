@@ -9,6 +9,16 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      // The default injected registerSW.js just calls .register() and
+      // relies on the browser's own, heavily-throttled (often ~24h)
+      // background check for a new service worker -- on iOS Safari in
+      // particular that can leave a visitor stuck on a stale cached
+      // build for a long time after a new one ships, even with
+      // skipWaiting/clientsClaim on (those only matter once an update
+      // is actually detected). Registering manually instead lets us
+      // force an explicit update check on every load and whenever the
+      // tab becomes visible again, in src/registerSW.ts.
+      injectRegister: false,
       includeAssets: ['favicon.svg'],
       manifest: {
         name: 'Love Attached',

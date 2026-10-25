@@ -4,6 +4,7 @@ import './styles/tokens.css'
 import './styles/print.css'
 import App from './App.tsx'
 import { StoreProvider } from './store'
+import './registerSW'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

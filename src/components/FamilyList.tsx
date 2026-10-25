@@ -3,6 +3,7 @@ import { groupTreasuresByRecipient } from "../utils/group";
 import type { Treasure, Person } from "../types";
 import { useBlobUrl } from "../utils/useBlobUrl";
 import { LogoMark } from "./Logo";
+import { FloatingActions } from "./FloatingActions";
 
 export function FamilyListPage({ onBack }: { onBack: () => void }) {
   const { state } = useStore();
@@ -43,6 +44,8 @@ export function FamilyListPage({ onBack }: { onBack: () => void }) {
           <RecipientBox key={label} label={label} items={items} people={state.people} />
         ))}
       </div>
+
+      <FloatingActions onBack={onBack} onPrint={() => window.print()} />
     </div>
   );
 }
