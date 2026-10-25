@@ -5,6 +5,7 @@ import { newId } from "../utils/id";
 
 export function PhotoPicker({ photos, onChange }: { photos: Photo[]; onChange: (photos: Photo[]) => void }) {
   const [urls, setUrls] = useState<Record<string, string>>({});
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -23,11 +24,21 @@ export function PhotoPicker({ photos, onChange }: { photos: Photo[]; onChange: (
 
   async function handleFiles(files: FileList | null) {
     if (!files || files.length === 0) return;
+    setError(null);
     const added: Photo[] = [];
-    for (const file of Array.from(files)) {
-      const id = newId();
-      await putBlob(id, file);
-      added.push({ id, isMain: false });
+    try {
+      for (const file of Array.from(files)) {
+        const id = newId();
+        await putBlob(id, file);
+        added.push({ id, isMain: false });
+      }
+    } catch {
+      setError(
+        added.length > 0
+          ? "Only some of those photos saved — you can add the rest again."
+          : "That photo couldn't be saved. Try again, or try a different photo."
+      );
+      if (added.length === 0) return;
     }
     const next = [...photos, ...added];
     if (!next.some((p) => p.isMain) && next.length > 0) next[0].isMain = true;
@@ -127,13 +138,13 @@ export function PhotoPicker({ photos, onChange }: { photos: Photo[]; onChange: (
           <input
             type="file"
             accept="image/*"
-            capture="environment"
             multiple
             style={{ display: "none" }}
             onChange={(e) => handleFiles(e.target.files)}
           />
         </label>
       </div>
+      {error && <p style={{ color: "#A33", fontSize: 13, margin: 0 }}>{error}</p>}
     </div>
   );
 }

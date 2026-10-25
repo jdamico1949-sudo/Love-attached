@@ -18,6 +18,7 @@ export function VoiceField({ label, prompt, text, audioId, onChange, placeholder
   const [seconds, setSeconds] = useState(0);
   const [confirmReRecord, setConfirmReRecord] = useState(false);
   const [playUrl, setPlayUrl] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const handleRef = useRef<RecordingHandle | null>(null);
   const timerRef = useRef<number | undefined>(undefined);
   const liveTextRef = useRef(text);
@@ -27,13 +28,27 @@ export function VoiceField({ label, prompt, text, audioId, onChange, placeholder
   }, [audioId]);
 
   async function beginRecording() {
-    setRecording(true);
+    setError(null);
     setSeconds(0);
     liveTextRef.current = "";
+    // Only flip to the "recording" UI once the microphone is actually
+    // granted -- setting it beforehand left the Stop button stuck
+    // showing forever (with no handle to stop) whenever permission was
+    // denied or getUserMedia failed, since that failure was never caught.
+    try {
+      handleRef.current = await startRecording((live) => {
+        liveTextRef.current = live;
+      });
+    } catch (e) {
+      setError(
+        e instanceof DOMException && e.name === "NotAllowedError"
+          ? "Microphone access was blocked. Open Settings → Safari → Microphone and allow it for this site, then try again."
+          : "Couldn't start recording. You can still type your words below."
+      );
+      return;
+    }
+    setRecording(true);
     timerRef.current = window.setInterval(() => setSeconds((s) => s + 1), 1000);
-    handleRef.current = await startRecording((live) => {
-      liveTextRef.current = live;
-    });
   }
 
   async function handleStart() {
@@ -46,14 +61,24 @@ export function VoiceField({ label, prompt, text, audioId, onChange, placeholder
 
   async function handleStop() {
     const handle = handleRef.current;
-    if (!handle) return;
+    if (!handle) {
+      setRecording(false);
+      window.clearInterval(timerRef.current);
+      return;
+    }
     window.clearInterval(timerRef.current);
     setRecording(false);
-    const { blob } = await handle.stop();
-    const id = newId();
-    await putBlob(id, blob);
-    const transcribed = liveTextRef.current.trim();
-    onChange(transcribed || text, id);
+    try {
+      const { blob } = await handle.stop();
+      const id = newId();
+      await putBlob(id, blob);
+      const transcribed = liveTextRef.current.trim();
+      onChange(transcribed || text, id);
+    } catch {
+      setError("That recording couldn't be saved. You can try again, or just type your words below.");
+    } finally {
+      handleRef.current = null;
+    }
   }
 
   async function confirmAndReRecord() {
@@ -92,6 +117,10 @@ export function VoiceField({ label, prompt, text, audioId, onChange, placeholder
           <audio controls src={playUrl} style={{ height: 36, maxWidth: 220 }} />
         )}
       </div>
+
+      {error && (
+        <p style={{ color: "#A33", fontSize: 13, marginBottom: 8 }}>{error}</p>
+      )}
 
       {!speechRecognitionAvailable && (
         <p style={{ color: "var(--stone)", fontSize: 13, marginBottom: 8 }}>
