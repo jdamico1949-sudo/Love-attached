@@ -73,20 +73,14 @@ export function HomeScreen({
             <button type="button" className="btn-primary" style={{ fontSize: 17, padding: "16px 32px" }} onClick={onAdd}>
               + Add a treasure
             </button>
+            <div style={{ height: 14 }} />
+            <button type="button" className="btn-primary" style={{ fontSize: 17, padding: "16px 32px" }} onClick={onSummary}>
+              View your treasures
+            </button>
+            <p style={{ color: "var(--stone)", fontSize: 14, marginTop: 12, marginBottom: 0 }}>
+              See everyone's gifts, and check for anything still missing a home
+            </p>
           </div>
-
-          <button
-            type="button"
-            onClick={onSummary}
-            className="card"
-            style={{ width: "100%", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}
-          >
-            <span>
-              <strong style={{ display: "block", fontSize: 16 }}>View your treasures</strong>
-              <span style={{ color: "var(--stone)", fontSize: 14 }}>See everyone's gifts, and check for anything still missing a home</span>
-            </span>
-            <span style={{ color: "var(--rose)", fontWeight: 700, fontSize: 18 }}>→</span>
-          </button>
         </>
       )}
 
