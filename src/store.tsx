@@ -20,7 +20,7 @@ interface StoreApi {
   addPerson: (partial?: Partial<Person>) => Person;
   updatePerson: (id: string, patch: Partial<Person>) => void;
   setFinalization: (patch: Partial<AppState["finalization"]>) => void;
-  dismissWelcome: () => void;
+  setSkipIntro: (value: boolean) => void;
   setLastSignedAs: (value: string) => void;
 }
 
@@ -144,7 +144,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     setFinalization: (patch) => {
       setState((prev) => ({ ...prev, finalization: { ...prev.finalization, ...patch } }));
     },
-    dismissWelcome: () => setState((prev) => ({ ...prev, dismissedWelcome: true })),
+    setSkipIntro: (value) => setState((prev) => ({ ...prev, dismissedWelcome: value })),
     setLastSignedAs: (value) => setState((prev) => ({ ...prev, lastSignedAs: value })),
   };
 

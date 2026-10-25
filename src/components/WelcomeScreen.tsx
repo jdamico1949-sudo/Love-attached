@@ -1,6 +1,14 @@
+import { useState } from "react";
 import { LogoMark } from "./Logo";
 
-export function WelcomeScreen({ onStart, embedded }: { onStart: () => void; embedded?: boolean }) {
+export function WelcomeScreen({
+  onContinue,
+  skipChecked,
+}: {
+  onContinue: (skipNextTime: boolean) => void;
+  skipChecked: boolean;
+}) {
+  const [skip, setSkip] = useState(skipChecked);
   return (
     <div style={{ maxWidth: 520, margin: "0 auto", padding: "40px 20px 60px", textAlign: "center" }}>
       <div style={{ display: "flex", justifyContent: "center", marginBottom: 18 }}>
@@ -39,8 +47,18 @@ export function WelcomeScreen({ onStart, embedded }: { onStart: () => void; embe
         person and finalize your list so your wishes are clear.
       </p>
 
-      <button type="button" className="btn-primary" style={{ fontSize: 18, padding: "16px 32px" }} onClick={onStart}>
-        {embedded ? "Add a treasure" : "Add your first treasure"}
+      <label style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 15, color: "var(--stone)", marginBottom: 24, cursor: "pointer" }}>
+        <input type="checkbox" checked={skip} onChange={(e) => setSkip(e.target.checked)} style={{ width: "auto" }} />
+        I've read this — skip this page next time
+      </label>
+
+      <button
+        type="button"
+        className="btn-primary"
+        style={{ fontSize: 18, padding: "16px 32px" }}
+        onClick={() => onContinue(skip)}
+      >
+        Continue
       </button>
     </div>
   );

@@ -11,9 +11,16 @@ import { FinalizeScreen } from "./components/FinalizeScreen";
 type Screen = "home" | "summary" | "form" | "booklet" | "familylist" | "finalize" | "welcome";
 
 export default function App() {
-  const { state, loaded, addTreasure, dismissWelcome } = useStore();
+  const { state, loaded, addTreasure, setSkipIntro } = useStore();
   const [screen, setScreen] = useState<Screen>("home");
   const [activeTreasureId, setActiveTreasureId] = useState<string | null>(null);
+  // Separate from dismissedWelcome (which only controls whether the
+  // *next* fresh unlock shows this screen): once Welcome has been
+  // passed through this session, screen reverting to "home" afterward
+  // must never re-trigger it -- even if the person just unchecked "skip
+  // this next time" while reviewing it, which should take effect next
+  // time, not trap them on this screen right now.
+  const [passedIntroThisSession, setPassedIntroThisSession] = useState(false);
 
   if (!loaded) return null;
 
@@ -23,13 +30,22 @@ export default function App() {
     setScreen("form");
   }
 
-  function handleStartFromWelcome() {
-    dismissWelcome();
-    handleAddTreasure();
-  }
-
-  if (screen === "welcome" || (!state.dismissedWelcome && state.treasures.length === 0 && screen === "home")) {
-    return <WelcomeScreen onStart={handleStartFromWelcome} embedded={state.dismissedWelcome} />;
+  // Shown after every fresh unlock (login) unless the "skip this next
+  // time" box had been checked on a previous visit -- not tied to
+  // whether any treasures exist, so it isn't just a one-time first-run
+  // screen. Also reachable any time via "How it works" from Home
+  // (screen==="welcome" explicitly), independent of the gating check.
+  if (screen === "welcome" || (!state.dismissedWelcome && !passedIntroThisSession && screen === "home")) {
+    return (
+      <WelcomeScreen
+        skipChecked={state.dismissedWelcome}
+        onContinue={(skipNextTime) => {
+          setSkipIntro(skipNextTime);
+          setPassedIntroThisSession(true);
+          setScreen("home");
+        }}
+      />
+    );
   }
 
   if (screen === "form" && activeTreasureId) {
