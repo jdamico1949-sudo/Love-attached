@@ -9,10 +9,12 @@ export function SummaryScreen({
   onBack,
   onAdd,
   onOpen,
+  onPrintBooklet,
 }: {
   onBack: () => void;
   onAdd: () => void;
   onOpen: (id: string) => void;
+  onPrintBooklet: () => void;
 }) {
   const { state } = useStore();
   const [view, setView] = useState<View>("all");
@@ -25,7 +27,14 @@ export function SummaryScreen({
           <button type="button" className="btn-plain" onClick={onBack} style={{ marginBottom: 6 }}>
             ← Back
           </button>
-          <h2 style={{ fontSize: 24 }}>Your treasures</h2>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            <h2 style={{ fontSize: 24, margin: 0 }}>Your treasures</h2>
+            {state.treasures.length > 0 && (
+              <button type="button" className="btn-secondary" onClick={onPrintBooklet}>
+                🖨 Print Book
+              </button>
+            )}
+          </div>
           <p style={{ color: "var(--stone)", margin: 0 }}>
             {state.treasures.length} treasure{state.treasures.length === 1 ? "" : "s"} so far — a good place to check
             for anything still missing a home.
