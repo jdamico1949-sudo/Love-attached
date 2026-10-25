@@ -1,0 +1,31 @@
+.booklet-page,
+.familylist-page {
+  width: 8.5in;
+  min-height: 11in;
+  padding: 0.6in;
+  background: var(--linen);
+  margin: 0 auto 24px;
+  position: relative;
+  box-sizing: border-box;
+  box-shadow: 0 1px 6px rgba(43, 37, 34, 0.18);
+}
+
+@media print {
+  @page {
+    size: letter;
+    margin: 0;
+  }
+  body {
+    background: #fff;
+  }
+  .booklet-page,
+  .familylist-page {
+    box-shadow: none;
+    margin: 0;
+    page-break-after: always;
+  }
+  .booklet-page:last-child,
+  .familylist-page:last-child {
+    page-break-after: auto;
+  }
+}

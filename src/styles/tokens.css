@@ -1,0 +1,97 @@
+:root {
+  --rose: #9A3A4C;
+  --blush: #F2DEDD;
+  --linen: #FBF7EF;
+  --ink: #2B2522;
+  --stone: #5E544E;
+  --line: #E4D9CB;
+
+  --font-serif: "Lora", Georgia, serif;
+  --font-body: "Source Sans 3", -apple-system, system-ui, sans-serif;
+  --font-hand: "Caveat", cursive;
+}
+
+* { box-sizing: border-box; }
+
+html, body { margin: 0; padding: 0; }
+
+body {
+  background: var(--linen);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 17px;
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  margin: 0;
+}
+
+button {
+  font-family: var(--font-body);
+  font-size: 17px;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background: var(--rose);
+  color: var(--linen);
+  border: none;
+  border-radius: 999px;
+  padding: 16px 28px;
+  font-weight: 600;
+  min-height: 48px;
+  min-width: 48px;
+}
+
+.btn-secondary {
+  background: none;
+  color: var(--rose);
+  border: 1.5px solid var(--rose);
+  border-radius: 999px;
+  padding: 14px 24px;
+  font-weight: 600;
+  min-height: 48px;
+}
+
+.btn-plain {
+  background: none;
+  border: none;
+  color: var(--stone);
+  text-decoration: underline;
+  min-height: 48px;
+}
+
+input, textarea, select {
+  font-family: var(--font-body);
+  font-size: 17px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1.5px solid var(--line);
+  background: #fff;
+  width: 100%;
+}
+
+label {
+  display: block;
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--stone);
+  margin-bottom: 6px;
+}
+
+a { color: var(--rose); }
+
+.card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 18px;
+}
+
+@media print {
+  .no-print { display: none !important; }
+}
