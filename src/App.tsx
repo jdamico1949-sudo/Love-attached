@@ -34,7 +34,10 @@ export default function App() {
   if (!loaded) return null;
 
   function handleAddTreasure() {
-    const t = addTreasure({ signedAs: state.lastSignedAs });
+    // Prefills with whoever signed the last treasure, instead of
+    // starting blank every time -- that blank start is why the same
+    // book used to end up signed inconsistently, page to page.
+    const t = addTreasure({ signedBy: state.lastSignedBy });
     setActiveTreasureId(t.id);
     setScreen("form");
   }

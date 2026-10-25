@@ -5,7 +5,11 @@ import { TREASURE_CATEGORIES, TREASURE_CATEGORY_NAMES } from "../data/categories
 import { PhotoPicker } from "./PhotoPicker";
 import { VoiceField } from "./VoiceRecorder";
 import { PersonPicker } from "./PersonPicker";
+import { SignerPicker } from "./SignerPicker";
 import { useBlobUrl } from "../utils/useBlobUrl";
+import { formatSignature } from "../utils/signature";
+
+const OTHER_SUBCATEGORY = "__other__";
 
 type Step = "snap" | "tell" | "give";
 const STEPS: { id: Step; label: string }[] = [
@@ -15,10 +19,12 @@ const STEPS: { id: Step; label: string }[] = [
 ];
 
 export function TreasureForm({ treasure, onDone }: { treasure: Treasure; onDone: () => void }) {
-  const { updateTreasure, state, setLastSignedAs } = useStore();
+  const { updateTreasure, state, setLastSignedBy, addSignerOption, addCustomSubcategory } = useStore();
   const [step, setStep] = useState<Step>("snap");
   const [showMore, setShowMore] = useState(false);
   const [reviewing, setReviewing] = useState(false);
+  const [addingSubcategory, setAddingSubcategory] = useState(false);
+  const [newSubcategory, setNewSubcategory] = useState("");
 
   function patch(p: Partial<Treasure>) {
     updateTreasure(treasure.id, p);
@@ -97,7 +103,14 @@ export function TreasureForm({ treasure, onDone }: { treasure: Treasure; onDone:
           </div>
           <div style={{ marginBottom: 20 }}>
             <label>Category</label>
-            <select value={treasure.category} onChange={(e) => patch({ category: e.target.value, subcategory: "" })}>
+            <select
+              value={treasure.category}
+              onChange={(e) => {
+                patch({ category: e.target.value, subcategory: "" });
+                setAddingSubcategory(false);
+                setNewSubcategory("");
+              }}
+            >
               <option value="" disabled>
                 Choose a category…
               </option>
@@ -111,16 +124,73 @@ export function TreasureForm({ treasure, onDone }: { treasure: Treasure; onDone:
           {categoryGroup && (
             <div style={{ marginBottom: 20 }}>
               <label>More specifically</label>
-              <select value={treasure.subcategory} onChange={(e) => patch({ subcategory: e.target.value })}>
-                <option value="" disabled>
-                  Choose one…
-                </option>
-                {categoryGroup.items.map((i) => (
-                  <option key={i} value={i}>
-                    {i}
+              {!addingSubcategory ? (
+                <select
+                  value={treasure.subcategory}
+                  onChange={(e) => {
+                    if (e.target.value === OTHER_SUBCATEGORY) {
+                      setAddingSubcategory(true);
+                      return;
+                    }
+                    patch({ subcategory: e.target.value });
+                  }}
+                >
+                  <option value="" disabled>
+                    Choose one…
                   </option>
-                ))}
-              </select>
+                  {[...categoryGroup.items, ...(state.customSubcategories[treasure.category] || [])].map((i) => (
+                    <option key={i} value={i}>
+                      {i}
+                    </option>
+                  ))}
+                  <option value={OTHER_SUBCATEGORY}>Other (type your own)…</option>
+                </select>
+              ) : (
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <input
+                    value={newSubcategory}
+                    onChange={(e) => setNewSubcategory(e.target.value)}
+                    placeholder="e.g. Anklet"
+                    autoFocus
+                    style={{ flex: "1 1 180px" }}
+                    onKeyDown={(e) => {
+                      if (e.key !== "Enter") return;
+                      e.preventDefault();
+                      const trimmed = newSubcategory.trim();
+                      if (!trimmed) return;
+                      addCustomSubcategory(treasure.category, trimmed);
+                      patch({ subcategory: trimmed });
+                      setAddingSubcategory(false);
+                      setNewSubcategory("");
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="btn-primary"
+                    style={{ padding: "8px 16px", minHeight: "auto" }}
+                    onClick={() => {
+                      const trimmed = newSubcategory.trim();
+                      if (!trimmed) return;
+                      addCustomSubcategory(treasure.category, trimmed);
+                      patch({ subcategory: trimmed });
+                      setAddingSubcategory(false);
+                      setNewSubcategory("");
+                    }}
+                  >
+                    Add
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-plain"
+                    onClick={() => {
+                      setAddingSubcategory(false);
+                      setNewSubcategory("");
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </section>
@@ -246,14 +316,14 @@ export function TreasureForm({ treasure, onDone }: { treasure: Treasure; onDone:
                 placeholder="Share why they're getting this, or any memory that goes with it"
               />
               <div style={{ marginBottom: 20 }}>
-                <label>Signed</label>
-                <input
-                  value={treasure.signedAs}
-                  placeholder="e.g. Love, Grandma"
-                  onChange={(e) => {
-                    patch({ signedAs: e.target.value });
-                    setLastSignedAs(e.target.value);
+                <SignerPicker
+                  selected={treasure.signedBy}
+                  options={state.signerOptions}
+                  onChange={(names) => {
+                    patch({ signedBy: names });
+                    setLastSignedBy(names);
                   }}
+                  onAddOption={(name) => addSignerOption(name)}
                 />
               </div>
             </>
@@ -362,9 +432,9 @@ function ReviewPanel({ treasure, people }: { treasure: Treasure; people: Person[
                 {treasure.note.text}
               </p>
             )}
-            {treasure.signedAs && (
+            {treasure.signedBy.length > 0 && (
               <p style={{ fontFamily: "var(--font-hand)", fontSize: 17, color: "var(--rose)", textAlign: "right", marginTop: 10, marginBottom: 0 }}>
-                {treasure.signedAs}
+                {formatSignature(treasure.signedBy)}
               </p>
             )}
           </div>

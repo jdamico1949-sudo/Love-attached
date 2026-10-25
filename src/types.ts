@@ -46,7 +46,11 @@ export interface Treasure {
   backupPersonId: string | null;
   ifUnclaimed: string;
   note: { greeting: string; text: string; audioId: string | null };
-  signedAs: string;
+  // Who's giving this specific treasure, e.g. ["Papa", "Grandma"] -- one
+  // or more names picked from the remembered list (AppState.signerOptions),
+  // rather than free text, so "From ___" on the printed page always comes
+  // from a real, visible choice instead of whatever happened to be typed.
+  signedBy: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -61,7 +65,17 @@ export interface AppState {
   treasures: Treasure[];
   people: Person[];
   finalization: Finalization;
-  lastSignedAs: string;
+  // The giver names used on the most recent treasure -- prefills a
+  // brand-new treasure's own signedBy (instead of starting blank every
+  // time, which is why items ended up signed inconsistently) and is the
+  // default "Treasures from ___" on a booklet's cover page.
+  lastSignedBy: string[];
+  // Every giver name ever picked or typed, remembered so it shows up as
+  // a one-tap option on the next treasure instead of being retyped.
+  signerOptions: string[];
+  // Custom "More specifically" values typed under Other, remembered per
+  // category so they become real, selectable options from then on.
+  customSubcategories: Record<string, string[]>;
   dismissedWelcome: boolean;
 }
 

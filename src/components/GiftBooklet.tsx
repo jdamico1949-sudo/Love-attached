@@ -4,22 +4,11 @@ import type { Person, Treasure } from "../types";
 import { LogoMark } from "./Logo";
 import { FloatingActions } from "./FloatingActions";
 import { Fragment, useState } from "react";
+import { formatSignature, joinNames } from "../utils/signature";
 
 // Sentinel for "every person's booklet, one after another" -- distinct
 // from any real person id.
 const ALL_KEY = "__all__";
-
-// "Signed" is typed as a full closing, e.g. "Love, Grandma" -- the exact
-// phrase that belongs directly under a note. A "From ___" or "Treasures
-// from ___" line needs just the name, not the closing word repeated
-// ("From Love, Papa" reads oddly) -- this pulls the name out, favoring
-// whatever follows the last comma, so "Love, Grandma" and "With love,
-// Grandma" both become "Grandma", while a plain "Grandma" passes through.
-function signerName(signedAs: string): string {
-  if (!signedAs) return "";
-  const parts = signedAs.split(",");
-  return (parts.length > 1 ? parts[parts.length - 1] : parts[0]).trim();
-}
 
 export function GiftBookletPage({ onBack, initialPersonId }: { onBack: () => void; initialPersonId?: string }) {
   const { state } = useStore();
@@ -73,9 +62,16 @@ export function GiftBookletPage({ onBack, initialPersonId }: { onBack: () => voi
             );
             return (
               <Fragment key={p.id}>
-                <CoverPage personName={p.name} signedAs={state.lastSignedAs} treasureCount={treasures.length} finalizedAt={finalizedAt} />
+                <CoverPage personName={p.name} signedBy={state.lastSignedBy} treasureCount={treasures.length} finalizedAt={finalizedAt} />
                 {treasures.map((t, i) => (
-                  <TreasurePage key={t.id} treasure={t} personName={p.name} pageNum={i + 2} totalPages={treasures.length + 1} />
+                  <TreasurePage
+                    key={t.id}
+                    treasure={t}
+                    personName={p.name}
+                    pageNum={i + 2}
+                    totalPages={treasures.length + 1}
+                    bookSignedBy={state.lastSignedBy}
+                  />
                 ))}
               </Fragment>
             );
@@ -90,16 +86,17 @@ export function GiftBookletPage({ onBack, initialPersonId }: { onBack: () => voi
 
 function CoverPage({
   personName,
-  signedAs,
+  signedBy,
   treasureCount,
   finalizedAt,
 }: {
   personName: string;
-  signedAs: string;
+  signedBy: string[];
   treasureCount: number;
   finalizedAt: string | null;
 }) {
-  const fromLine = signedAs ? `Treasures from ${signerName(signedAs)}` : "Treasures for you";
+  const joined = joinNames(signedBy);
+  const fromLine = joined ? `Treasures from ${joined}` : "Treasures for you";
   return (
     <div className="booklet-page" style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center" }}>
       <LogoMark size={36} color="var(--rose)" />
@@ -122,14 +119,19 @@ function TreasurePage({
   personName,
   pageNum,
   totalPages,
+  bookSignedBy,
 }: {
   treasure: Treasure;
   personName: string;
   pageNum: number;
   totalPages: number;
+  bookSignedBy: string[];
 }) {
   const main = treasure.photos.find((p) => p.isMain) || treasure.photos[0];
   const url = useBlobUrl(main?.id);
+  // This item's own giver(s) if it was signed individually, otherwise
+  // the book's overall default -- never a hardcoded placeholder name.
+  const signedBy = treasure.signedBy.length > 0 ? treasure.signedBy : bookSignedBy;
 
   return (
     <div className="booklet-page">
@@ -193,9 +195,9 @@ function TreasurePage({
               {treasure.note.text}
             </p>
           )}
-          {treasure.signedAs && (
+          {treasure.signedBy.length > 0 && (
             <p style={{ fontFamily: "var(--font-hand)", fontSize: 18, color: "var(--rose)", textAlign: "right", marginTop: 14, marginBottom: 0 }}>
-              {treasure.signedAs}
+              {formatSignature(treasure.signedBy)}
             </p>
           )}
         </div>
@@ -215,7 +217,7 @@ function TreasurePage({
           paddingTop: 6,
         }}
       >
-        <span>From {signerName(treasure.signedAs) || "Grandma"}</span>
+        <span>{joinNames(signedBy) && `From ${joinNames(signedBy)}`}</span>
         <span>
           Page {pageNum} of {totalPages}
         </span>
