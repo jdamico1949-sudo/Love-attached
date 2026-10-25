@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Treasure, RecipientType } from "../types";
 import { useStore } from "../store";
 import { TREASURE_CATEGORIES, TREASURE_CATEGORY_NAMES } from "../data/categories";
@@ -35,6 +35,21 @@ export function TreasureForm({ treasure, onDone }: { treasure: Treasure; onDone:
     const greeting = type === "person" ? treasure.note.greeting : "";
     patch({ recipient: { ...treasure.recipient, type }, note: { ...treasure.note, greeting } });
   }
+
+  // Auto-fills the greeting once the chosen person is actually resolvable
+  // from state.people. Doing this in an effect (rather than inline in
+  // PersonPicker's onChange, where it used to live) avoids a stale-data
+  // race: "+ Add someone new" creates the person and picks them in the
+  // same click, and state.people here can still be the pre-add snapshot
+  // at that exact moment -- which silently produced "Dear them," instead
+  // of the real name. The effect re-runs once state.people catches up.
+  // Only fills a still-blank greeting, so it never overwrites something
+  // already typed or dictated.
+  useEffect(() => {
+    if (treasure.recipient.type !== "person" || !treasure.recipient.personId || treasure.note.greeting) return;
+    const name = firstName(treasure.recipient.personId);
+    if (name !== "them") patch({ note: { ...treasure.note, greeting: `Dear ${name},` } });
+  }, [treasure.recipient.type, treasure.recipient.personId, state.people]);
 
   return (
     <div style={{ maxWidth: 560, margin: "0 auto", padding: "20px 20px 100px" }}>
@@ -174,12 +189,7 @@ export function TreasureForm({ treasure, onDone }: { treasure: Treasure; onDone:
             <div style={{ marginBottom: 20 }}>
               <PersonPicker
                 personId={treasure.recipient.personId}
-                onChange={(personId) =>
-                  patch({
-                    recipient: { ...treasure.recipient, personId },
-                    note: { ...treasure.note, greeting: `Dear ${firstName(personId)},` },
-                  })
-                }
+                onChange={(personId) => patch({ recipient: { ...treasure.recipient, personId } })}
               />
             </div>
           )}
@@ -213,13 +223,21 @@ export function TreasureForm({ treasure, onDone }: { treasure: Treasure; onDone:
 
           {treasure.recipient.type === "person" && (
             <>
+              <div style={{ marginBottom: 14 }}>
+                <label>Greeting</label>
+                <input
+                  value={treasure.note.greeting}
+                  placeholder="e.g. Dear Daniel,"
+                  onChange={(e) => patch({ note: { ...treasure.note, greeting: e.target.value } })}
+                />
+              </div>
               <VoiceField
                 label="Note to them"
-                prompt={`A few words for ${firstName(treasure.recipient.personId)}, in your own voice.`}
-                text={`${treasure.note.greeting}\n\n${treasure.note.text}`.trim()}
+                prompt={`A few words for ${firstName(treasure.recipient.personId)}, in your own voice. No need to say the greeting or sign off again — those are their own boxes.`}
+                text={treasure.note.text}
                 audioId={treasure.note.audioId}
                 onChange={(text, audioId) => patch({ note: { ...treasure.note, text, audioId } })}
-                placeholder="Dear ..., "
+                placeholder="Share why they're getting this, or any memory that goes with it"
               />
               <div style={{ marginBottom: 20 }}>
                 <label>Signed</label>

@@ -4,6 +4,18 @@ import type { Treasure } from "../types";
 import { LogoMark } from "./Logo";
 import { useState } from "react";
 
+// "Signed" is typed as a full closing, e.g. "Love, Grandma" -- the exact
+// phrase that belongs directly under a note. A "From ___" or "Treasures
+// from ___" line needs just the name, not the closing word repeated
+// ("From Love, Papa" reads oddly) -- this pulls the name out, favoring
+// whatever follows the last comma, so "Love, Grandma" and "With love,
+// Grandma" both become "Grandma", while a plain "Grandma" passes through.
+function signerName(signedAs: string): string {
+  if (!signedAs) return "";
+  const parts = signedAs.split(",");
+  return (parts.length > 1 ? parts[parts.length - 1] : parts[0]).trim();
+}
+
 export function GiftBookletPage({ onBack }: { onBack: () => void }) {
   const { state } = useStore();
   const peopleWithTreasures = state.people.filter((p) =>
@@ -65,7 +77,7 @@ function CoverPage({
   treasureCount: number;
   finalizedAt: string | null;
 }) {
-  const fromLine = signedAs ? `Treasures from ${signedAs.replace(/^love,?\s*/i, "")}` : "Treasures for you";
+  const fromLine = signedAs ? `Treasures from ${signerName(signedAs)}` : "Treasures for you";
   return (
     <div className="booklet-page" style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center" }}>
       <LogoMark size={36} color="var(--rose)" />
@@ -130,7 +142,14 @@ function TreasurePage({
           {treasure.category}
         </div>
         <h2 style={{ fontSize: 26 }}>{treasure.name}</h2>
-        {treasure.provenance && <p style={{ fontStyle: "italic", color: "var(--stone)" }}>{treasure.provenance}</p>}
+        {treasure.provenance && (
+          <p style={{ fontStyle: "italic", color: "var(--stone)" }}>
+            <span style={{ fontStyle: "normal", fontWeight: 700, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.5 }}>
+              Whose it was:{" "}
+            </span>
+            {treasure.provenance}
+          </p>
+        )}
       </div>
 
       {treasure.story.text && (
@@ -142,13 +161,18 @@ function TreasurePage({
         </div>
       )}
 
-      {treasure.note.text && (
+      {(treasure.note.greeting || treasure.note.text) && (
         <div className="card" style={{ background: "#fff" }}>
-          <p style={{ fontFamily: "var(--font-hand)", fontSize: 18, whiteSpace: "pre-wrap", margin: 0 }}>
-            {treasure.note.text}
-          </p>
+          {treasure.note.greeting && (
+            <p style={{ fontFamily: "var(--font-hand)", fontSize: 18, margin: "0 0 14px" }}>{treasure.note.greeting}</p>
+          )}
+          {treasure.note.text && (
+            <p style={{ fontFamily: "var(--font-hand)", fontSize: 18, whiteSpace: "pre-wrap", margin: 0 }}>
+              {treasure.note.text}
+            </p>
+          )}
           {treasure.signedAs && (
-            <p style={{ fontFamily: "var(--font-hand)", fontSize: 18, color: "var(--rose)", textAlign: "right", marginTop: 10, marginBottom: 0 }}>
+            <p style={{ fontFamily: "var(--font-hand)", fontSize: 18, color: "var(--rose)", textAlign: "right", marginTop: 14, marginBottom: 0 }}>
               {treasure.signedAs}
             </p>
           )}
@@ -169,7 +193,7 @@ function TreasurePage({
           paddingTop: 6,
         }}
       >
-        <span>From {treasure.signedAs || "Grandma"}</span>
+        <span>From {signerName(treasure.signedAs) || "Grandma"}</span>
         <span>
           Page {pageNum} of {totalPages}
         </span>

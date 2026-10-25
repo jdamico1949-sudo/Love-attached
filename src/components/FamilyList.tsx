@@ -72,7 +72,7 @@ function TreasureRow({ treasure, people, divider }: { treasure: Treasure; people
       )}
       <div style={{ fontSize: 13 }}>
         <div style={{ fontWeight: 700, fontSize: 14.5 }}>{treasure.name || "(untitled)"}</div>
-        {treasure.provenance && <div style={{ color: "var(--stone)" }}>{treasure.provenance}</div>}
+        {treasure.provenance && <div style={{ color: "var(--stone)" }}>Whose it was: {treasure.provenance}</div>}
         {treasure.location && <div>Kept: {treasure.location}</div>}
         {backup && <div>If not {treasure.recipient.type === "person" ? "them" : "taken"}: goes to {backup.name}</div>}
         {treasure.ifUnclaimed && <div>If unclaimed: {treasure.ifUnclaimed}</div>}
