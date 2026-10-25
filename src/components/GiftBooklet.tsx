@@ -1,9 +1,13 @@
 import { useStore } from "../store";
 import { useBlobUrl } from "../utils/useBlobUrl";
-import type { Treasure } from "../types";
+import type { Person, Treasure } from "../types";
 import { LogoMark } from "./Logo";
 import { FloatingActions } from "./FloatingActions";
-import { useState } from "react";
+import { Fragment, useState } from "react";
+
+// Sentinel for "every person's booklet, one after another" -- distinct
+// from any real person id.
+const ALL_KEY = "__all__";
 
 // "Signed" is typed as a full closing, e.g. "Love, Grandma" -- the exact
 // phrase that belongs directly under a note. A "From ___" or "Treasures
@@ -22,10 +26,15 @@ export function GiftBookletPage({ onBack, initialPersonId }: { onBack: () => voi
   const peopleWithTreasures = state.people.filter((p) =>
     state.treasures.some((t) => t.recipient.type === "person" && t.recipient.personId === p.id)
   );
-  const [personId, setPersonId] = useState<string>(initialPersonId || peopleWithTreasures[0]?.id || "");
+  // Opened from a specific person's own print button -> just them.
+  // Opened from the general "Print Book" entry points (no person given)
+  // -> the whole book, everyone's booklet back to back.
+  const [personId, setPersonId] = useState<string>(initialPersonId || ALL_KEY);
 
-  const person = state.people.find((p) => p.id === personId);
-  const treasures = state.treasures.filter((t) => t.recipient.type === "person" && t.recipient.personId === personId);
+  const showingAll = personId === ALL_KEY;
+  const selectedPeople: Person[] = showingAll
+    ? peopleWithTreasures
+    : peopleWithTreasures.filter((p) => p.id === personId);
   const finalizedAt = state.finalization.finalizedAt;
 
   return (
@@ -41,6 +50,7 @@ export function GiftBookletPage({ onBack, initialPersonId }: { onBack: () => voi
           <>
             <label>Whose booklet?</label>
             <select value={personId} onChange={(e) => setPersonId(e.target.value)} style={{ marginBottom: 20 }}>
+              <option value={ALL_KEY}>Everyone — the whole book</option>
               {peopleWithTreasures.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.name}
@@ -49,22 +59,31 @@ export function GiftBookletPage({ onBack, initialPersonId }: { onBack: () => voi
             </select>
             <br />
             <button type="button" className="btn-primary" onClick={() => window.print()}>
-              Print this booklet
+              {showingAll ? "Print the whole book" : "Print this booklet"}
             </button>
           </>
         )}
       </div>
 
-      {person && (
+      {selectedPeople.length > 0 && (
         <div className="booklet-print">
-          <CoverPage personName={person.name} signedAs={state.lastSignedAs} treasureCount={treasures.length} finalizedAt={finalizedAt} />
-          {treasures.map((t, i) => (
-            <TreasurePage key={t.id} treasure={t} personName={person.name} pageNum={i + 2} totalPages={treasures.length + 1} />
-          ))}
+          {selectedPeople.map((p) => {
+            const treasures = state.treasures.filter(
+              (t) => t.recipient.type === "person" && t.recipient.personId === p.id
+            );
+            return (
+              <Fragment key={p.id}>
+                <CoverPage personName={p.name} signedAs={state.lastSignedAs} treasureCount={treasures.length} finalizedAt={finalizedAt} />
+                {treasures.map((t, i) => (
+                  <TreasurePage key={t.id} treasure={t} personName={p.name} pageNum={i + 2} totalPages={treasures.length + 1} />
+                ))}
+              </Fragment>
+            );
+          })}
         </div>
       )}
 
-      {person && <FloatingActions onBack={onBack} onPrint={() => window.print()} />}
+      {selectedPeople.length > 0 && <FloatingActions onBack={onBack} onPrint={() => window.print()} />}
     </div>
   );
 }

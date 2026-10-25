@@ -16,7 +16,7 @@ export function SummaryScreen({
   onOpen: (id: string) => void;
   onPrintBooklet: (personId?: string) => void;
 }) {
-  const { state } = useStore();
+  const { state, removeTreasure } = useStore();
   const [view, setView] = useState<View>("all");
   const grouped = groupTreasuresByRecipient(state.treasures, state.people);
 
@@ -70,7 +70,13 @@ export function SummaryScreen({
           {view === "all" ? (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 16 }}>
               {state.treasures.map((t) => (
-                <TreasureCard key={t.id} treasure={t} people={state.people} onOpen={() => onOpen(t.id)} />
+                <TreasureCard
+                  key={t.id}
+                  treasure={t}
+                  people={state.people}
+                  onOpen={() => onOpen(t.id)}
+                  onDelete={() => removeTreasure(t.id)}
+                />
               ))}
             </div>
           ) : (
@@ -115,7 +121,13 @@ export function SummaryScreen({
                     </div>
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 16 }}>
                       {items.map((t) => (
-                        <TreasureCard key={t.id} treasure={t} people={state.people} onOpen={() => onOpen(t.id)} />
+                        <TreasureCard
+                          key={t.id}
+                          treasure={t}
+                          people={state.people}
+                          onOpen={() => onOpen(t.id)}
+                          onDelete={() => removeTreasure(t.id)}
+                        />
                       ))}
                     </div>
                   </div>

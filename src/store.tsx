@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from "react";
 import type { AppState, Person, Treasure } from "./types";
-import { loadState, saveState } from "./storage/db";
+import { deleteBlob, loadState, saveState } from "./storage/db";
 import { newId, todayIso } from "./utils/id";
 
 const EMPTY_STATE: AppState = {
@@ -128,7 +128,18 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       }));
     },
     removeTreasure: (id) => {
-      setState((prev) => ({ ...prev, treasures: prev.treasures.filter((t) => t.id !== id) }));
+      setState((prev) => {
+        const t = prev.treasures.find((x) => x.id === id);
+        if (t) {
+          // Clean up its blobs too, not just the record -- otherwise
+          // every deleted treasure's photos and recordings would sit in
+          // the blob store forever with nothing left pointing at them.
+          for (const photo of t.photos) deleteBlob(photo.id);
+          if (t.story.audioId) deleteBlob(t.story.audioId);
+          if (t.note.audioId) deleteBlob(t.note.audioId);
+        }
+        return { ...prev, treasures: prev.treasures.filter((x) => x.id !== id) };
+      });
     },
     addPerson: (partial) => {
       const p = newPerson(partial);
