@@ -17,12 +17,12 @@ function signerName(signedAs: string): string {
   return (parts.length > 1 ? parts[parts.length - 1] : parts[0]).trim();
 }
 
-export function GiftBookletPage({ onBack }: { onBack: () => void }) {
+export function GiftBookletPage({ onBack, initialPersonId }: { onBack: () => void; initialPersonId?: string }) {
   const { state } = useStore();
   const peopleWithTreasures = state.people.filter((p) =>
     state.treasures.some((t) => t.recipient.type === "person" && t.recipient.personId === p.id)
   );
-  const [personId, setPersonId] = useState<string>(peopleWithTreasures[0]?.id || "");
+  const [personId, setPersonId] = useState<string>(initialPersonId || peopleWithTreasures[0]?.id || "");
 
   const person = state.people.find((p) => p.id === personId);
   const treasures = state.treasures.filter((t) => t.recipient.type === "person" && t.recipient.personId === personId);

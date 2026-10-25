@@ -18,6 +18,11 @@ export default function App() {
   // summary page's own "Print Book" shortcut should return there instead
   // of bouncing back to Home.
   const [bookletReturnScreen, setBookletReturnScreen] = useState<"home" | "summary">("home");
+  // Which person's booklet to open straight to -- set when a specific
+  // person's print button is tapped on Summary; undefined for the
+  // general "Print Book"/"Print a gift booklet" entry points, which fall
+  // back to whoever's first.
+  const [bookletPersonId, setBookletPersonId] = useState<string | undefined>(undefined);
   // Separate from dismissedWelcome (which only controls whether the
   // *next* fresh unlock shows this screen): once Welcome has been
   // passed through this session, screen reverting to "home" afterward
@@ -76,15 +81,17 @@ export default function App() {
           setActiveTreasureId(id);
           setScreen("form");
         }}
-        onPrintBooklet={() => {
+        onPrintBooklet={(personId) => {
           setBookletReturnScreen("summary");
+          setBookletPersonId(personId);
           setScreen("booklet");
         }}
       />
     );
   }
 
-  if (screen === "booklet") return <GiftBookletPage onBack={() => setScreen(bookletReturnScreen)} />;
+  if (screen === "booklet")
+    return <GiftBookletPage onBack={() => setScreen(bookletReturnScreen)} initialPersonId={bookletPersonId} />;
   if (screen === "familylist") return <FamilyListPage onBack={() => setScreen("home")} />;
   if (screen === "finalize") return <FinalizeScreen onBack={() => setScreen("home")} />;
 
@@ -94,6 +101,7 @@ export default function App() {
       onSummary={() => setScreen("summary")}
       onBooklet={() => {
         setBookletReturnScreen("home");
+        setBookletPersonId(undefined);
         setScreen("booklet");
       }}
       onFamilyList={() => setScreen("familylist")}

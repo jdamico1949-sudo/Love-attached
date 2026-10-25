@@ -14,7 +14,7 @@ export function SummaryScreen({
   onBack: () => void;
   onAdd: () => void;
   onOpen: (id: string) => void;
-  onPrintBooklet: () => void;
+  onPrintBooklet: (personId?: string) => void;
 }) {
   const { state } = useStore();
   const [view, setView] = useState<View>("all");
@@ -30,7 +30,7 @@ export function SummaryScreen({
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
             <h2 style={{ fontSize: 24, margin: 0 }}>Your treasures</h2>
             {state.treasures.length > 0 && (
-              <button type="button" className="btn-secondary" onClick={onPrintBooklet}>
+              <button type="button" className="btn-secondary" onClick={() => onPrintBooklet()}>
                 🖨 Print Book
               </button>
             )}
@@ -75,16 +75,52 @@ export function SummaryScreen({
             </div>
           ) : (
             <div>
-              {grouped.map(([label, items]) => (
-                <div key={label} style={{ marginBottom: 24 }}>
-                  <h3 style={{ fontSize: 18, marginBottom: 10, color: "var(--rose)" }}>{label}</h3>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 16 }}>
-                    {items.map((t) => (
-                      <TreasureCard key={t.id} treasure={t} people={state.people} onOpen={() => onOpen(t.id)} />
-                    ))}
+              {grouped.map(([label, items]) => {
+                // Only a real person has a booklet to print -- "Still
+                // deciding", "To be donated" and "To be sold" aren't
+                // anyone's gift booklet. Every item in one of these groups
+                // shares the same recipient, so the first one tells us
+                // whether this group is a real person and, if so, their id.
+                const first = items[0];
+                const personId = first.recipient.type === "person" ? first.recipient.personId : undefined;
+                return (
+                  <div key={label} style={{ marginBottom: 24 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                      <h3 style={{ fontSize: 18, margin: 0, color: "var(--rose)" }}>{label}</h3>
+                      {personId && (
+                        <button
+                          type="button"
+                          aria-label={`Print ${label}'s book`}
+                          title={`Print ${label}'s book`}
+                          onClick={() => onPrintBooklet(personId)}
+                          style={{
+                            width: 28,
+                            height: 28,
+                            borderRadius: "50%",
+                            border: "none",
+                            background: "var(--rose)",
+                            color: "#fff",
+                            fontSize: 13,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            cursor: "pointer",
+                            padding: 0,
+                            flexShrink: 0,
+                          }}
+                        >
+                          🖨
+                        </button>
+                      )}
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 16 }}>
+                      {items.map((t) => (
+                        <TreasureCard key={t.id} treasure={t} people={state.people} onOpen={() => onOpen(t.id)} />
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </>
