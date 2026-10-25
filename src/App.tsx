@@ -2,12 +2,13 @@ import { useState } from "react";
 import { useStore } from "./store";
 import { WelcomeScreen } from "./components/WelcomeScreen";
 import { HomeScreen } from "./components/HomeScreen";
+import { SummaryScreen } from "./components/SummaryScreen";
 import { TreasureForm } from "./components/TreasureForm";
 import { GiftBookletPage } from "./components/GiftBooklet";
 import { FamilyListPage } from "./components/FamilyList";
 import { FinalizeScreen } from "./components/FinalizeScreen";
 
-type Screen = "home" | "form" | "booklet" | "familylist" | "finalize" | "welcome";
+type Screen = "home" | "summary" | "form" | "booklet" | "familylist" | "finalize" | "welcome";
 
 export default function App() {
   const { state, loaded, addTreasure, dismissWelcome } = useStore();
@@ -46,6 +47,19 @@ export default function App() {
     }
   }
 
+  if (screen === "summary") {
+    return (
+      <SummaryScreen
+        onBack={() => setScreen("home")}
+        onAdd={handleAddTreasure}
+        onOpen={(id) => {
+          setActiveTreasureId(id);
+          setScreen("form");
+        }}
+      />
+    );
+  }
+
   if (screen === "booklet") return <GiftBookletPage onBack={() => setScreen("home")} />;
   if (screen === "familylist") return <FamilyListPage onBack={() => setScreen("home")} />;
   if (screen === "finalize") return <FinalizeScreen onBack={() => setScreen("home")} />;
@@ -53,10 +67,7 @@ export default function App() {
   return (
     <HomeScreen
       onAdd={handleAddTreasure}
-      onOpen={(id) => {
-        setActiveTreasureId(id);
-        setScreen("form");
-      }}
+      onSummary={() => setScreen("summary")}
       onBooklet={() => setScreen("booklet")}
       onFamilyList={() => setScreen("familylist")}
       onFinalize={() => setScreen("finalize")}

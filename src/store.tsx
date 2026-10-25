@@ -26,6 +26,25 @@ interface StoreApi {
 
 const StoreContext = createContext<StoreApi | null>(null);
 
+// One-time repair for a bug that shipped briefly: the greeting and note
+// body used to be merged into one editable box, and picking a
+// just-created recipient could auto-fill the greeting as the literal
+// "Dear them," (a stale-data race, since fixed) while note.text kept
+// the OLD full merged string starting with the real "Dear <Name>,".
+// After that merge was split back into two real fields, an entry saved
+// under the old behavior would show both: the stale "Dear them," and
+// then the real greeting again at the start of the body. "Dear them,"
+// is not something a person would type themselves, so it's a safe,
+// unambiguous signature to detect and repair automatically rather than
+// asking anyone to hand-edit it.
+const STALE_GREETING = "Dear them,";
+function repairStaleGreeting(t: Treasure): Treasure {
+  if (t.note.greeting !== STALE_GREETING) return t;
+  const m = t.note.text.match(/^Dear\s+[^,]+,\s*/);
+  if (!m) return t;
+  return { ...t, note: { ...t.note, greeting: m[0].trim(), text: t.note.text.slice(m[0].length) } };
+}
+
 export function newTreasure(partial?: Partial<Treasure>): Treasure {
   const now = todayIso();
   return {
@@ -68,7 +87,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     loadState(EMPTY_STATE).then((s) => {
-      setState(s);
+      setState({ ...s, treasures: s.treasures.map(repairStaleGreeting) });
       setLoaded(true);
     });
   }, []);

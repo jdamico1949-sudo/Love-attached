@@ -40,6 +40,14 @@ export function TreasureCard({
         {url && <img src={url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
       </div>
       <strong style={{ fontSize: 17, color: "var(--ink)" }}>{treasure.name || "Untitled treasure"}</strong>
+      {status === "placed" && treasure.recipient.type === "person" && (
+        <span style={{ fontSize: 14, color: "var(--stone)" }}>For {recipient?.name || "someone"}</span>
+      )}
+      {status === "placed" && treasure.recipient.type !== "person" && (
+        <span style={{ fontSize: 14, color: "var(--stone)" }}>
+          {treasure.recipient.type === "donate" ? "To be donated" : "To be sold"}
+        </span>
+      )}
       <span
         style={{
           alignSelf: "flex-start",
@@ -51,13 +59,7 @@ export function TreasureCard({
           color: status === "placed" ? "var(--rose)" : "var(--stone)",
         }}
       >
-        {status === "placed"
-          ? treasure.recipient.type === "person"
-            ? `Has a home — ${recipient?.name || ""}`
-            : treasure.recipient.type === "donate"
-            ? "Will be donated"
-            : "Will be sold"
-          : "Still deciding"}
+        {status === "placed" ? "Has a home" : "Still deciding"}
       </span>
     </button>
   );
